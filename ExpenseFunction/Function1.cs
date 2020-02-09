@@ -58,19 +58,20 @@ namespace ExpenseFunction
 
                             using (SqlCommand cmd = new SqlCommand())
                             {
+                                cmd.CommandText = sql;
                                 cmd.Connection = conn;
                                 cmd.Parameters.Add("@amount", SqlDbType.Float).Value = e.Amount;
                                 cmd.Parameters.Add("@description", SqlDbType.NVarChar, 500).Value = e.Description;
                                 cmd.Parameters.Add("@title", SqlDbType.NVarChar, 500).Value = e.Description;
                                 cmd.Parameters.Add("@type", SqlDbType.Int).Value = 1;
                                 cmd.Parameters.Add("@userID", SqlDbType.UniqueIdentifier).Value = Guid.Parse("dc6d042d-06f0-4aa6-9070-941b89fdc856");
-                                cmd.Parameters.Add("@category", SqlDbType.Int).Value = 14;
-                                cmd.Parameters.Add("@source", SqlDbType.Int).Value = 1;
+                                cmd.Parameters.Add("@category", SqlDbType.Int).Value = 6;
+                                cmd.Parameters.Add("@source", SqlDbType.Int).Value = 2;
                                 cmd.Parameters.Add("@userID1", SqlDbType.NVarChar, 128).Value = "dc6d042d-06f0-4aa6-9070-941b89fdc856";
 
                                 cmd.CommandType = CommandType.Text;
                                 cmd.ExecuteNonQuery();
-                                log.Info(System.Environment.NewLine);
+                                //log.Info(System.Environment.NewLine);
                             }
                         }
 
