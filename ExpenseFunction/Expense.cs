@@ -17,5 +17,6 @@ namespace ExpenseFunction
         public string Category { get; set; }
         public string ChargeType { get; set; }
 
+
     }
 }
