@@ -18,6 +18,7 @@ namespace ExpenseFunction
         string _fileName;
         Guid _userID;
         int _fileImportID;
+        string _storageConn;
 
 
 
@@ -26,13 +27,13 @@ namespace ExpenseFunction
             _fileName = fileName;
             _userID = userID;
             _fileImportID = fileImportID;
+            _storageConn = Environment.GetEnvironmentVariable("storage_connection");
+
         }
 
         public void Run()
         {
-            string storageConnectionString = "DefaultEndpointsProtocol=https;AccountName=expensesstorageaccount;AccountKey=I+m1R8oFMyb/HJk5mI2BeZwqSVLzVA73t4bcuJMUI3acN5uV3DHOm3Se/mk1yIFLO02g8Gta3bnMRmTdQPr7mw==;EndpointSuffix=core.windows.net";
-
-            var storageAccount = CloudStorageAccount.Parse(storageConnectionString);
+            var storageAccount = CloudStorageAccount.Parse(_storageConn);
             var myClient = storageAccount.CreateCloudBlobClient();
             var container = myClient.GetContainerReference("transactions");
 
