@@ -12,39 +12,56 @@ namespace ExpenseFunction
     public static class Function2
     {
         [FunctionName("Function2")]
-        public static void Run([TimerTrigger("0 */1 * * * *")]TimerInfo myTimer, TraceWriter log)
+        public static void Run([TimerTrigger("0 0 10,22 * * *")]TimerInfo myTimer, TraceWriter log)
+        //public static void Run([TimerTrigger("0 0 10 * * *")]TimerInfo myTimer, TraceWriter log)
+        //public static void Run([TimerTrigger("0 * * * * *")]TimerInfo myTimer, TraceWriter log)
         {
             log.Info($"C# Timer trigger function executed at: {DateTime.Now}");
 
-            var str = Environment.GetEnvironmentVariable("sqldb_connection");
-            using (SqlConnection conn = new SqlConnection(str))
+            try
             {
-                conn.Open();
-
-
-
-                string getFileImports = "select * from FileImports where status = 0";
-
-                using (SqlCommand cmd = new SqlCommand())
+                int recordCount = 0;
+                var str = Environment.GetEnvironmentVariable("sqldb_connection");
+                using (SqlConnection conn = new SqlConnection(str))
                 {
-                    cmd.CommandText = getFileImports;
-                    cmd.Connection = conn;
+                    conn.Open();
 
-                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    string getFileImports = "select * from FileImports where status = 0";
+
+                    using (SqlCommand cmd = new SqlCommand())
                     {
-                        
-                        while (reader.Read())
-                        {
-                            int fileImportID = int.Parse(reader["FileImportID"].ToString());
-                            Runner runner = new Runner(reader["FileNameAndPath"].ToString(), Guid.Parse(reader["UserID"].ToString()), fileImportID);
-                            runner.Run();
-                        }
-                    }
+                        cmd.CommandText = getFileImports;
+                        cmd.Connection = conn;
 
-                    
+                        using (SqlDataReader reader = cmd.ExecuteReader())
+                        {
+                            
+                            while (reader.Read())
+                            {
+                                recordCount++;
+                                int fileImportID = int.Parse(reader["FileImportID"].ToString());
+                                Runner runner = new Runner(reader["FileNameAndPath"].ToString(), Guid.Parse(reader["UserID"].ToString()), fileImportID, log);
+                                runner.Run();
+                            }
+                        }
+
+                    }
 
                 }
 
+
+                string msg = "Imports completed: " + recordCount.ToString() + System.Environment.NewLine;
+                log.Info(msg);
+                
+            }
+            catch(Exception ex)
+            {
+                string errMsg = "---------------------------------" + System.Environment.NewLine;
+                errMsg += "ERROR" + System.Environment.NewLine;
+                errMsg += ex.Message + System.Environment.NewLine;
+                errMsg += ex.StackTrace + System.Environment.NewLine;
+                errMsg += "---------------------------------";
+                log.Info(errMsg);
             }
 
         }

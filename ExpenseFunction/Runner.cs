@@ -1,4 +1,5 @@
 ﻿using CsvHelper;
+using Microsoft.Azure.WebJobs.Host;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
 using System;
@@ -19,20 +20,23 @@ namespace ExpenseFunction
         Guid _userID;
         int _fileImportID;
         string _storageConn;
+        TraceWriter _log;
 
 
-
-        public Runner(string fileName, Guid userID, int fileImportID)
+        public Runner(string fileName, Guid userID, int fileImportID, TraceWriter log)
         {
             _fileName = fileName;
             _userID = userID;
             _fileImportID = fileImportID;
             _storageConn = Environment.GetEnvironmentVariable("storage_connection");
+            _log = log;
 
         }
 
         public void Run()
         {
+            string msg = "";
+
             var storageAccount = CloudStorageAccount.Parse(_storageConn);
             var myClient = storageAccount.CreateCloudBlobClient();
             var container = myClient.GetContainerReference("transactions");
@@ -41,13 +45,14 @@ namespace ExpenseFunction
             MemoryStream ms = new MemoryStream();
             blockBlob.DownloadToStream(ms);
 
+            ms.Position = 0;
             using (StreamReader sr = new StreamReader(ms))
             {
                 var records = new List<Expense>();
                 using (var csv = new CsvReader(sr, CultureInfo.InvariantCulture))
                 {
                     csv.Read();
-                    //csv.ReadHeader();
+                    csv.ReadHeader();
                     while (csv.Read())
                     {
                         var record = new Expense
@@ -70,12 +75,12 @@ namespace ExpenseFunction
                     }
                 }
 
-
+                
                 var str = Environment.GetEnvironmentVariable("sqldb_connection");
                 using (SqlConnection conn = new SqlConnection(str))
                 {
                     conn.Open();
-
+                    int addedRecords = 0;
                     foreach (Expense e in records)
                     {
                         //log.Info(e.Description + " " + e.Amount.ToString());
@@ -127,6 +132,7 @@ namespace ExpenseFunction
                                 cmd.ExecuteNonQuery();
                                 //log.Info(System.Environment.NewLine);
                             }
+                            addedRecords++;
                         }
                     }
 
@@ -146,6 +152,13 @@ namespace ExpenseFunction
                     destBlob.StartCopy(blockBlob);
                     //remove source blob after copy is done.
                     blockBlob.Delete();
+
+                    msg += "IMPORT COMPLETED" + System.Environment.NewLine;
+                    msg += "Records Read: " + records.Count().ToString() + System.Environment.NewLine;
+                    msg += "Records Added: " + addedRecords.ToString() + System.Environment.NewLine;
+                    msg += "FileImportID: " + _fileImportID.ToString();
+                    _log.Info(msg);
+
                 }
             }
         }

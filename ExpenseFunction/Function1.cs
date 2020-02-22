@@ -12,6 +12,7 @@ namespace ExpenseFunction
 {
     public static class Function1
     {
+        [Disable]
         [FunctionName("Function1")]
         public static void Run([BlobTrigger("transactions/{name}")]Stream myBlob, string name, TraceWriter log)
         {
